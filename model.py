@@ -1,5 +1,5 @@
 # model.py
-import python.dotenv as dotenv
+import dotenv
 import google.generativeai as genai
 
 # Configure the API key for the generative AI
