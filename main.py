@@ -53,7 +53,7 @@ def conversation_chain():
     """
     model_instance = ChatGoogleGenerativeAI(model="gemini-1.5-flash", api_key=gemini_api_key)
     prompt = PromptTemplate(template=template, input_variables=["context", "question"])
-    chain = load_qa_chain(model_instance, chain_type="stuff", prompt=prompt)
+    chain = load_qa_chain(model_instance, chain_type="refine", prompt=prompt)
     return chain, model_instance
 
 def user_question(question, db, chain, raw_text, history):
