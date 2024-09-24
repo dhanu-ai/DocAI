@@ -8,12 +8,17 @@ from langchain.prompts import PromptTemplate
 import google.generativeai as genai
 from langchain_google_genai import ChatGoogleGenerativeAI
 import dotenv
-import model# Import the model module correctly
+import os
+import model
 
-
+# Load environment variables from the .env file
+dotenv.load_dotenv()
 
 # Configure the Google Generative AI API
-gemini_api_key = dotenv.get_key(".env", "GOOGLE_API_KEY")
+gemini_api_key = os.getenv("GOOGLE_API_KEY")
+if gemini_api_key is None:
+    raise ValueError("GOOGLE_API_KEY not found in environment variables")
+
 genai.configure(api_key=gemini_api_key)
 
 def get_pdf_text(pdf_docs):
@@ -36,13 +41,13 @@ def get_text_chunks(raw_text):
 def get_vector(chunks):
     if not chunks:
         return None
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", api_key=gemini_api_key)
     db = FAISS.from_texts(texts=chunks, embedding=embeddings)
     return db
 
 def conversation_chain():
     template = """
-    You are a helpful assistant for doctor. Now give the deatils about the test performed on the patient. Do not give any instruction and Do not make up the details of the test.
+    You are a helpful assistant for doctor. Now give the details about the test performed on the patient. Do not give any instruction and do not make up the details of the test.
     Context: \n{context}?\n
     Question: \n{question}\n
     Answer:
@@ -53,7 +58,6 @@ def conversation_chain():
     return chain, model_instance
 
 def user_question(question, db, chain, raw_text, history):
-    
     if db is None:
         st.write("Please upload and process a PDF first.")
         return
@@ -114,7 +118,7 @@ def main():
                     st.session_state.raw_text = raw_text
     
     if 'vector_store' in st.session_state and 'chain' in st.session_state and 'raw_text' in st.session_state:
-            question = "In Bold Letters name the possible diease. And summarize the report"
+            question = "In Bold Letters name the possible disease. And summarize the report"
             response = user_question(question, st.session_state.vector_store, st.session_state.chain, st.session_state.raw_text, st.session_state.history)
             st.session_state.history.append({"role": "assistant", "content": response})
             with st.chat_message("assistant"):
