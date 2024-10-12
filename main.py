@@ -1,7 +1,7 @@
 import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.vectorstores import FAISS  # Updated import
+from langchain_community.vectorstores import FAISS  
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
@@ -10,10 +10,9 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 import dotenv
 import os
 import model
-# Load environment variables from the .env file
+
 dotenv.load_dotenv()
 
-# Configure the Google Generative AI API
 gemini_api_key = os.getenv("GOOGLE_API_KEY")
 if gemini_api_key is None:
     raise ValueError("GOOGLE_API_KEY not found in environment variables")
@@ -74,13 +73,13 @@ def user_question(question, db, chain, raw_text, history):
         st.write("Please upload and process a PDF first.")
         return
 
-    docs = db.similarity_search(question, k=5)  # Retrieve the top 5 most similar documents
-    response = chain.invoke(  # Use .invoke() instead of __call__()
+    docs = db.similarity_search(question, k=5) 
+    response = chain.invoke(
         {"input_documents": docs, "question": question, "context": raw_text},
         return_only_outputs=True
     )
     
-    final_response = response.get("output_text")  # Adjust this as needed
+    final_response = response.get("output_text")  
     return final_response
 
 def main():
@@ -91,7 +90,6 @@ def main():
         st.session_state.messages = []
         st.session_state.history = []
 
-    # Display chat messages from history on app rerun
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["parts"])
@@ -116,7 +114,6 @@ def main():
                 vector_store = get_vector(chunks)
                 chain, model_instance = conversation_chain()
 
-                # Ensure the processing is complete before allowing questions
                 if vector_store and chain and raw_text:
                     st.session_state.vector_store = vector_store
                     st.session_state.chain = chain
@@ -136,12 +133,11 @@ def main():
         st.session_state.history.append({"role": "assistant", "content": response})
     
         if question := st.chat_input("What is up?"):
-        # Add user message to chat history
+            
             with st.chat_message("user"):
                 st.markdown(question)
             st.session_state.messages.append({"role": "user", "parts": question})
             st.session_state.history.append({"role": "user", "content": question})
-        # Display user message in chat message container
         
             inital_response = user_question(question, st.session_state.vector_store, st.session_state.chain, st.session_state.raw_text, st.session_state.history)
             response = model.model(inital_response, st.session_state.history)
@@ -149,7 +145,7 @@ def main():
         
         with st.chat_message("assistant"):
             st.session_state.messages.append({"role": "assistant", "parts": response})
-            st.markdown(response)  # Display the assistant's response in the main interface
+            st.markdown(response) 
 
 if __name__ == "__main__":
     main()
