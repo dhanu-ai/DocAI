@@ -8,13 +8,13 @@ genai.configure(api_key=gemini_api_key)
 
 # Define the generation configuration
 generation_config = {
-    "temperature": 1,
+    "temperature": 0.4,
     "top_p": 0.95,
     "top_k": 64,
     "max_output_tokens": 8192,
 }
 
-def model(query, history):
+def model(info, history):
     # Format history for Google Generative AI
     formatted_history = []
     for item in history:
@@ -35,18 +35,11 @@ def model(query, history):
 
     # Prepare the message with system instruction and user query
     message = f"""
-    System: You're a doctor. The individual will ask the details about the test performed.
-    Your task is:
-    - Name the possible disease according to the test in Bold Letters.
-    - Give some home remedies if possible.
-    - Provide a diet plan to avoid consuming those food items which may affect the disease negatively; the main goal of the diet plan is to minimize the risk of disease.
-    - Give some advice which may help in preventing the disease.
-    
+    System: You're task is to refine and fact check the {info} and make is sound like a professinal doctor advise. Use the give information as the main source no need to provide any additional information.
     Remember:
-        You're not a certified doctor. You're helping the user to find the possible disease and home remedy. Most importantly the user is seeking help before consulting with a doctor.
-        In the end, highlight the importance of consulting a doctor according to the user's situation.
-    
-    User: {query}
+        -The information is based on medical report so do not make any additional information or make up things.
+        -The information is provided is not from real doctors.
+    User: {info}
     """
 
     # Get the response from the model

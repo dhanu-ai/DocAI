@@ -9,7 +9,7 @@ import google.generativeai as genai
 from langchain_google_genai import ChatGoogleGenerativeAI
 import dotenv
 import os
-
+import model
 # Load environment variables from the .env file
 dotenv.load_dotenv()
 
@@ -46,8 +46,21 @@ def get_vector(chunks):
 
 def conversation_chain():
     template = """
-    You are a helpful assistant for doctor. Now give the details about the test performed on the patient. Do not give any instruction and do not make up the details of the test.
-    Context: \n{context}?\n
+    The scenario is you're general physician with doctor degree and a patient has arrived with medical report.
+    Now all you to do is:
+    1. Read the medical report.
+    2. Answer the question asked by paitent in detail.
+    3. Donot make up the information.
+    4. Use the medical report as the main source.
+    5. Highlight the importance of consulting a doctor according to the user's situation.
+    6. Focus on {question} and give relvent answer to it.
+    
+    Remember:
+            You're not a certified doctor. You're helping the user to find the possible disease and home remedy. Most importantly the user is seeking help before consulting with a doctor.
+        In the end, highlight the importance of consulting a doctor according to the user's situation.
+   
+    
+    Context: \n{context}\n
     Question: \n{question}\n
     Answer:
     """
@@ -83,13 +96,6 @@ def main():
         with st.chat_message(message["role"]):
             st.markdown(message["parts"])
 
-    if question := st.chat_input("What is up?"):
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "parts": question})
-        st.session_state.history.append({"role": "user", "content": question})
-        # Display user message in chat message container
-        with st.chat_message("user"):
-            st.markdown(question)
 
     pdf_docs = None
     raw_text = None
@@ -117,9 +123,30 @@ def main():
                     st.session_state.raw_text = raw_text
 
     if 'vector_store' in st.session_state and 'chain' in st.session_state and 'raw_text' in st.session_state:
-        question = "In Bold Letters name the possible disease. And summarize the report"
-        response = user_question(question, st.session_state.vector_store, st.session_state.chain, st.session_state.raw_text, st.session_state.history)
+        question = """
+         Your task is:
+        - Name the possible disease according to the test in Bold Letters.
+        - Give some home remedies if possible.
+        - Provide a diet plan to avoid consuming those food items which may affect the disease negatively; the main goal of the diet plan is to minimize the risk of disease.
+        - Give some advice which may help in preventing the disease.
+        
+        """
+        inital_response = user_question(question, st.session_state.vector_store, st.session_state.chain, st.session_state.raw_text, st.session_state.history)
+        response = model.model(inital_response, st.session_state.history)
         st.session_state.history.append({"role": "assistant", "content": response})
+    
+        if question := st.chat_input("What is up?"):
+        # Add user message to chat history
+            with st.chat_message("user"):
+                st.markdown(question)
+            st.session_state.messages.append({"role": "user", "parts": question})
+            st.session_state.history.append({"role": "user", "content": question})
+        # Display user message in chat message container
+        
+            inital_response = user_question(question, st.session_state.vector_store, st.session_state.chain, st.session_state.raw_text, st.session_state.history)
+            response = model.model(inital_response, st.session_state.history)
+            st.session_state.history.append({"role": "assistant", "content": response})
+        
         with st.chat_message("assistant"):
             st.session_state.messages.append({"role": "assistant", "parts": response})
             st.markdown(response)  # Display the assistant's response in the main interface
