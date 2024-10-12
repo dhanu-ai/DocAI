@@ -10,7 +10,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 import dotenv
 import os
 import model
-
 # Load environment variables from the .env file
 dotenv.load_dotenv()
 
@@ -22,9 +21,6 @@ if gemini_api_key is None:
 genai.configure(api_key=gemini_api_key)
 
 def get_pdf_text(pdf_docs):
-    """
-    Extracts text from the uploaded PDF files.
-    """
     text = ""
     for pdf in pdf_docs:
         pdf_reader = PdfReader(pdf)
@@ -33,9 +29,6 @@ def get_pdf_text(pdf_docs):
     return text
 
 def get_text_chunks(raw_text):
-    """
-    Splits the extracted text into manageable chunks.
-    """
     text_splitter = CharacterTextSplitter(
         separator="\n",
         chunk_size=1000,
@@ -45,9 +38,6 @@ def get_text_chunks(raw_text):
     return chunks
 
 def get_vector(chunks):
-    """
-    Converts text chunks into vector embeddings using Google Generative AI.
-    """
     if not chunks:
         return None
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", api_key=gemini_api_key)
@@ -55,9 +45,6 @@ def get_vector(chunks):
     return db
 
 def conversation_chain():
-    """
-    Sets up the conversation chain with a predefined prompt template.
-    """
     template = """
     The scenario is you're general physician with doctor degree and a patient has arrived with medical report.
     Now all you to do is:
@@ -72,6 +59,7 @@ def conversation_chain():
             You're not a certified doctor. You're helping the user to find the possible disease and home remedy. Most importantly the user is seeking help before consulting with a doctor.
         In the end, highlight the importance of consulting a doctor according to the user's situation.
    
+    
     Context: \n{context}\n
     Question: \n{question}\n
     Answer:
@@ -82,9 +70,6 @@ def conversation_chain():
     return chain, model_instance
 
 def user_question(question, db, chain, raw_text, history):
-    """
-    Handles user questions by retrieving relevant documents and generating a response.
-    """
     if db is None:
         st.write("Please upload and process a PDF first.")
         return
@@ -99,13 +84,9 @@ def user_question(question, db, chain, raw_text, history):
     return final_response
 
 def main():
-    """
-    Main function to run the Streamlit app.
-    """
     st.set_page_config(page_title="DocAI", page_icon="🧑‍⚕️", layout="wide")
     st.header("DocAI 🧑‍⚕️")
 
-    # Initialize session state variables
     if "messages" not in st.session_state:
         st.session_state.messages = []
         st.session_state.history = []
@@ -114,6 +95,7 @@ def main():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["parts"])
+
 
     pdf_docs = None
     raw_text = None
@@ -154,12 +136,12 @@ def main():
         st.session_state.history.append({"role": "assistant", "content": response})
     
         if question := st.chat_input("What is up?"):
-            # Add user message to chat history
+        # Add user message to chat history
             with st.chat_message("user"):
                 st.markdown(question)
             st.session_state.messages.append({"role": "user", "parts": question})
             st.session_state.history.append({"role": "user", "content": question})
-            # Display user message in chat message container
+        # Display user message in chat message container
         
             inital_response = user_question(question, st.session_state.vector_store, st.session_state.chain, st.session_state.raw_text, st.session_state.history)
             response = model.model(inital_response, st.session_state.history)
