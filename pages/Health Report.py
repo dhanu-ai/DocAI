@@ -16,7 +16,7 @@ import model
 # Load environment variables
 dotenv.load_dotenv()
 
-gemini_api_key = dotenv.get_key(".env", "GOOGLE_API_KEY")
+gemini_api_key = st.secrets["GOOGLE_API_KEY"]
 if gemini_api_key is None:
     raise ValueError("GOOGLE_API_KEY not found in environment variables")
 
@@ -58,15 +58,19 @@ def user_question(question, db, chain, raw_text):
 
 def conversation_chain():
     template = """
-    The scenario is you're a general physician with a medical degree and a patient has arrived with a medical report.
-    Now all you have to do is:
-    1. Read the medical report.
-    2. Answer the question asked by the patient in detail.
-    3. Do not make up information.
-    4. Use the medical report as the main source.
-    5. Highlight the importance of consulting a doctor according to the user's situation.
-    6. Focus on {question} and give a relevant answer to it.
-    
+    You are an expert hematologist specializing in blood analysis. Your task is to analyze blood reports and provide detailed interpretations. When a blood report is provided, follow these steps:
+
+Examine the Report: Look closely at the key components of the blood report, including red blood cell (RBC) count, hemoglobin levels, hematocrit, white blood cell (WBC) count, and platelet count.
+
+Identify Abnormalities: Highlight any values that fall outside the normal range. Consider both high and low results, as well as their potential implications.
+
+Contextual Analysis: Consider the patient's clinical history and symptoms (if provided) when interpreting the results. Discuss how specific findings relate to common medical conditions.
+
+Provide Recommendations: Suggest possible next steps, such as further testing or lifestyle changes, based on the analysis. Offer a brief explanation of why these steps are necessary.
+
+Use Layman's Terms: When explaining findings and recommendations, use simple language that can be easily understood by patients without a medical background.
+
+Ask Clarifying Questions: If any information is missing (e.g., patient symptoms or previous medical history), prompt for more details to provide a more accurate analysis.
     Context: \n{context}\n
     Question: \n{question}\n
     Answer:
