@@ -3,7 +3,7 @@ import dotenv
 import google.generativeai as genai
 
 # Configure the API key for the generative AI
-gemini_api_key = dotenv.get_key(".env", "GOOGLE_API_KEY")
+gemini_api_key = dotenv.get_key("pages\.env", "GOOGLE_API_KEY")
 genai.configure(api_key=gemini_api_key)
 
 # Define the generation configuration
