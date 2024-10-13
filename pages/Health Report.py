@@ -1,4 +1,4 @@
-import streamlit as st
+gemini_api_keyimport streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -10,7 +10,6 @@ import dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os
 import model
-
 
 
 # Load environment variables
@@ -56,6 +55,11 @@ def user_question(question, db, chain, raw_text):
     )
     return response.get("output_text")
 
+def validate_blood_report_content(raw_text):
+    # Keywords that indicate the content of a blood report
+    keywords = ["hemoglobin", "RBC", "WBC", "platelet", "hematocrit", "blood test"]
+    return any(keyword.lower() in raw_text.lower() for keyword in keywords)
+
 def conversation_chain():
     template = """
     You are an expert hematologist specializing in blood analysis. Your task is to analyze blood reports and provide detailed interpretations. When a blood report is provided, follow these steps:
@@ -96,7 +100,7 @@ def main():
 
     # Sidebar for PDF file upload and processing
     with st.sidebar:
-        st.subheader("Upload Your Test Result")
+        st.subheader("Upload Your Blood Test Result")
         pdf_docs = st.file_uploader("Choose PDF files", accept_multiple_files=True, type="pdf")
 
         if st.button("Process PDF"):
@@ -105,27 +109,30 @@ def main():
             else:
                 with st.spinner("Processing..."):
                     raw_text = get_pdf_text(pdf_docs)
-                    chunks = get_text_chunks(raw_text)
-                    vector_store = get_vector(chunks)
-                    chain, _ = conversation_chain()
+                    if not validate_blood_report_content(raw_text):
+                        st.error("The uploaded PDF does not appear to be a blood report. Please upload a valid blood test report.")
+                    else:
+                        chunks = get_text_chunks(raw_text)
+                        vector_store = get_vector(chunks)
+                        chain, _ = conversation_chain()
 
-                    if vector_store and chain and raw_text:
-                        st.session_state.vector_store_chatbot_2 = vector_store
-                        st.session_state.chain_chatbot_2 = chain
-                        st.session_state.raw_text_chatbot_2 = raw_text
-                        st.success("PDF processed successfully.")
+                        if vector_store and chain and raw_text:
+                            st.session_state.vector_store_chatbot_2 = vector_store
+                            st.session_state.chain_chatbot_2 = chain
+                            st.session_state.raw_text_chatbot_2 = raw_text
+                            st.success("PDF processed successfully.")
 
-                        # Initial question for disease identification
-                        initial_question = """
-                        Your task is:
-                        - Name the possible disease according to the test in Bold Letters.
-                        - Give some home remedies if possible.
-                        - Provide a diet plan to avoid consuming those food items which may affect the disease negatively; the main goal of the diet plan is to minimize the risk of disease.
-                        - Give some advice which may help in preventing the disease.
-                        """
-                        initial_response = user_question(initial_question, vector_store, chain, raw_text)
-                        if initial_response:
-                            st.session_state.messages_chatbot_2.append({"role": "assistant", "content": initial_response})
+                            # Initial question for disease identification
+                            initial_question = """
+                            Your task is:
+                            - Name the possible disease according to the test in Bold Letters.
+                            - Give some home remedies if possible.
+                            - Provide a diet plan to avoid consuming those food items which may affect the disease negatively; the main goal of the diet plan is to minimize the risk of disease.
+                            - Give some advice which may help in preventing the disease.
+                            """
+                            initial_response = user_question(initial_question, vector_store, chain, raw_text)
+                            if initial_response:
+                                st.session_state.messages_chatbot_2.append({"role": "assistant", "content": initial_response})
 
     # Display previous messages in the main area
     for message in st.session_state.messages_chatbot_2:
