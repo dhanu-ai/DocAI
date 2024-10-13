@@ -1,4 +1,4 @@
-gemini_api_keyimport streamlit as st
+import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
