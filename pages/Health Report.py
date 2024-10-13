@@ -16,7 +16,7 @@ import model
 # Load environment variables
 dotenv.load_dotenv()
 
-gemini_api_key = os.getenv("GOOGLE_API_KEY")
+gemini_api_key = dotenv.get_key(".env", "GOOGLE_API_KEY")
 if gemini_api_key is None:
     raise ValueError("GOOGLE_API_KEY not found in environment variables")
 
